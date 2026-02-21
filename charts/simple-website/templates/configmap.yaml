@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "simple-website.fullname" . }}-html
+  labels:
+    {{- include "simple-website.labels" . | nindent 4 }}
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Simple Website</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          background: #0f172a;
+          color: #e2e8f0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 100vh;
+        }
+        .card {
+          background: #1e293b;
+          border: 1px solid #334155;
+          border-radius: 12px;
+          padding: 3rem 4rem;
+          text-align: center;
+          max-width: 520px;
+        }
+        .badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          background: #0ea5e9;
+          color: #fff;
+          font-size: 0.75rem;
+          font-weight: 600;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+          padding: 4px 12px;
+          border-radius: 999px;
+          margin-bottom: 1.5rem;
+        }
+        h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.75rem; }
+        p  { color: #94a3b8; line-height: 1.6; margin-bottom: 1.5rem; }
+        .stack {
+          display: flex;
+          justify-content: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+        .pill {
+          background: #0f172a;
+          border: 1px solid #334155;
+          border-radius: 6px;
+          padding: 4px 12px;
+          font-size: 0.8rem;
+          color: #7dd3fc;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <div class="badge">&#9989; Deployed</div>
+        <h1>Hello, Kubernetes!</h1>
+        <p>This page is served by <strong>nginx</strong>, deployed as a Helm chart
+           and managed by <strong>ArgoCD</strong> on a <strong>kind</strong> cluster.</p>
+        <div class="stack">
+          <span class="pill">Helm</span>
+          <span class="pill">ArgoCD</span>
+          <span class="pill">kind</span>
+          <span class="pill">nginx</span>
+          <span class="pill">ingress-nginx</span>
+        </div>
+      </div>
+    </body>
+    </html>

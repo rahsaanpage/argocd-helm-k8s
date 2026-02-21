@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: simple-website
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    # TODO: Replace with your actual Git repo URL
+    repoURL: https://github.com/<your-username>/argocd-helm-k8s.git
+    targetRevision: HEAD
+    path: charts/simple-website
+    helm:
+      valueFiles:
+        - values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+
+  syncPolicy:
+    automated:
+      prune: true      # delete resources removed from Git
+      selfHeal: true   # revert manual changes
+    syncOptions:
+      - CreateNamespace=true
