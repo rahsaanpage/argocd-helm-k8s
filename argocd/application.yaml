@@ -8,7 +8,7 @@ spec:
 
   source:
     # TODO: Replace with your actual Git repo URL
-    repoURL: https://github.com/<your-username>/argocd-helm-k8s.git
+    repoURL: https://github.com/rahsaanpage/argocd-helm-k8s.git
     targetRevision: HEAD
     path: charts/simple-website
     helm:
