@@ -45,7 +45,16 @@ kind create cluster --name demo
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/kind/deploy.yaml
+```
 
+> **kind requirement:** The ingress-nginx controller uses a node selector for `ingress-ready=true`.
+> Label one of your worker nodes or the sync will fail with a webhook error:
+>
+> ```bash
+> kubectl label node <your-worker-node> ingress-ready=true
+> ```
+
+```bash
 kubectl wait --namespace ingress-nginx \
   --for=condition=ready pod \
   --selector=app.kubernetes.io/component=controller \
