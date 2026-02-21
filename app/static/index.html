@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>K8s Cluster Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #f0f6fc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #last-updated {
+      font-size: 0.78rem;
+      color: #8b949e;
+    }
+
+    main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+    /* summary cards */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .card .value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #58a6ff;
+    }
+
+    .card .label {
+      font-size: 0.82rem;
+      color: #8b949e;
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* sections */
+    section {
+      margin-bottom: 32px;
+    }
+
+    section h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #f0f6fc;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #30363d;
+    }
+
+    /* tables */
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 10px 12px;
+      background: #161b22;
+      color: #8b949e;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #30363d;
+    }
+
+    tbody tr { border-bottom: 1px solid #21262d; }
+    tbody tr:hover { background: #1c2128; }
+
+    tbody td {
+      padding: 10px 12px;
+      vertical-align: middle;
+    }
+
+    /* badges */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.73rem;
+      font-weight: 600;
+    }
+
+    .badge-green  { background: #1f4423; color: #3fb950; }
+    .badge-red    { background: #3d1c1c; color: #f85149; }
+    .badge-yellow { background: #3d2e00; color: #d29922; }
+    .badge-blue   { background: #1c3250; color: #58a6ff; }
+    .badge-gray   { background: #21262d; color: #8b949e; }
+
+    .role-tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      background: #1c3250;
+      color: #58a6ff;
+      margin-right: 4px;
+    }
+
+    /* loading */
+    #loading {
+      text-align: center;
+      padding: 80px;
+      color: #8b949e;
+      font-size: 0.9rem;
+    }
+
+    #content { display: none; }
+
+    /* no-metrics notice */
+    .notice {
+      font-size: 0.8rem;
+      color: #8b949e;
+      font-style: italic;
+      padding: 12px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>&#9729; Kubernetes Cluster Dashboard</h1>
+    <span id="last-updated">Loading…</span>
+  </header>
+
+  <main>
+    <div id="loading">Fetching cluster data…</div>
+
+    <div id="content">
+      <!-- summary cards -->
+      <div class="cards">
+        <div class="card"><div class="value" id="c-nodes">–</div><div class="label">Nodes</div></div>
+        <div class="card"><div class="value" id="c-pods">–</div><div class="label">Pods</div></div>
+        <div class="card"><div class="value" id="c-deps">–</div><div class="label">Deployments</div></div>
+        <div class="card"><div class="value" id="c-running">–</div><div class="label">Running Pods</div></div>
+      </div>
+
+      <!-- nodes -->
+      <section>
+        <h2>Nodes</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th><th>Roles</th><th>Status</th>
+                <th>CPU Cap</th><th>Mem Cap</th>
+                <th>CPU Used</th><th>Mem Used</th>
+              </tr>
+            </thead>
+            <tbody id="nodes-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- deployments -->
+      <section>
+        <h2>Deployments</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Namespace</th><th>Ready</th><th>Desired</th><th>Status</th></tr>
+            </thead>
+            <tbody id="deps-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- pods -->
+      <section>
+        <h2>Pods</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Namespace</th><th>Phase</th><th>Node</th><th>Restarts</th></tr>
+            </thead>
+            <tbody id="pods-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const REFRESH_MS = 10_000;
+
+    function phaseClass(phase) {
+      switch (phase) {
+        case 'Running':   return 'badge-green';
+        case 'Pending':   return 'badge-yellow';
+        case 'Failed':    return 'badge-red';
+        case 'Succeeded': return 'badge-blue';
+        default:          return 'badge-gray';
+      }
+    }
+
+    function esc(s) {
+      return String(s ?? '')
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // Build a lookup map from node name → metrics
+    function buildMetricsMap(nodeMetrics) {
+      const m = {};
+      (nodeMetrics || []).forEach(nm => { m[nm.name] = nm; });
+      return m;
+    }
+
+    function render(data) {
+      const metricsMap = buildMetricsMap(data.nodeMetrics);
+      const hasMetrics = data.nodeMetrics && data.nodeMetrics.length > 0;
+
+      // cards
+      const running = (data.pods || []).filter(p => p.phase === 'Running').length;
+      document.getElementById('c-nodes').textContent = (data.nodes || []).length;
+      document.getElementById('c-pods').textContent  = (data.pods  || []).length;
+      document.getElementById('c-deps').textContent  = (data.deployments || []).length;
+      document.getElementById('c-running').textContent = running;
+
+      // nodes
+      const nodesHtml = (data.nodes || []).map(n => {
+        const readyBadge = n.ready
+          ? '<span class="badge badge-green">Ready</span>'
+          : '<span class="badge badge-red">NotReady</span>';
+        const roles = (n.roles || []).map(r => `<span class="role-tag">${esc(r)}</span>`).join('');
+        const nm = metricsMap[n.name];
+        const cpuUsed = nm ? esc(nm.cpu) : (hasMetrics ? '–' : '<span class="badge badge-gray">n/a</span>');
+        const memUsed = nm ? esc(nm.memory) : (hasMetrics ? '–' : '<span class="badge badge-gray">n/a</span>');
+        return `<tr>
+          <td>${esc(n.name)}</td>
+          <td>${roles || '<span class="badge badge-gray">worker</span>'}</td>
+          <td>${readyBadge}</td>
+          <td>${esc(n.cpuCapacity)}</td>
+          <td>${esc(n.memCapacity)}</td>
+          <td>${cpuUsed}</td>
+          <td>${memUsed}</td>
+        </tr>`;
+      }).join('');
+      document.getElementById('nodes-body').innerHTML = nodesHtml || '<tr><td colspan="7" style="color:#8b949e;padding:16px">No nodes found</td></tr>';
+
+      // deployments
+      const depsHtml = (data.deployments || []).map(d => {
+        const ok = d.ready === d.desired && d.desired > 0;
+        const badge = ok
+          ? '<span class="badge badge-green">Healthy</span>'
+          : '<span class="badge badge-yellow">Degraded</span>';
+        return `<tr>
+          <td>${esc(d.name)}</td>
+          <td>${esc(d.namespace)}</td>
+          <td>${d.ready}</td>
+          <td>${d.desired}</td>
+          <td>${badge}</td>
+        </tr>`;
+      }).join('');
+      document.getElementById('deps-body').innerHTML = depsHtml || '<tr><td colspan="5" style="color:#8b949e;padding:16px">No deployments found</td></tr>';
+
+      // pods
+      const podsHtml = (data.pods || []).map(p => {
+        return `<tr>
+          <td>${esc(p.name)}</td>
+          <td>${esc(p.namespace)}</td>
+          <td><span class="badge ${phaseClass(p.phase)}">${esc(p.phase)}</span></td>
+          <td>${esc(p.node)}</td>
+          <td>${p.restarts > 0 ? `<span class="badge badge-yellow">${p.restarts}</span>` : p.restarts}</td>
+        </tr>`;
+      }).join('');
+      document.getElementById('pods-body').innerHTML = podsHtml || '<tr><td colspan="5" style="color:#8b949e;padding:16px">No pods found</td></tr>';
+
+      document.getElementById('last-updated').textContent =
+        'Updated: ' + new Date().toLocaleTimeString();
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+    }
+
+    async function fetchMetrics() {
+      try {
+        const res = await fetch('/api/metrics');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        render(await res.json());
+      } catch (err) {
+        document.getElementById('last-updated').textContent = 'Error: ' + err.message;
+      }
+    }
+
+    fetchMetrics();
+    setInterval(fetchMetrics, REFRESH_MS);
+  </script>
+</body>
+</html>

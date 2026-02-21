@@ -1,9 +1,9 @@
 replicaCount: 2
 
 image:
-  repository: nginx
-  tag: alpine
-  pullPolicy: IfNotPresent
+  repository: localhost:5001/simple-website
+  tag: latest
+  pullPolicy: Always
 
 service:
   type: ClusterIP
